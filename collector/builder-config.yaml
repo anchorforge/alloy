@@ -1,0 +1,29 @@
+dist:
+  module: github.com/grafana/alloy/otelcol
+  name: collector
+  description: Alloy OTel Collector distribution.
+  version: v1.11.0
+  output_path: .
+
+extensions:
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/jaegerremotesampling v0.134.0
+#  - gomod: github.com/grafana/alloy/extension/alloyengine v0.1.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.134.0
+  - gomod: go.opentelemetry.io/collector/extension/zpagesextension v0.134.0
+
+exporters:
+#  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.134.0
+#  - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.134.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter v0.130.0
+
+processors:
+  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.134.0
+
+receivers:
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.134.0
+
+connectors:
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/countconnector v0.134.0
+
+replaces:
+  - go.opentelemetry.io/collector/pdata/pprofile => go.opentelemetry.io/collector/pdata/pprofile v0.135.0
