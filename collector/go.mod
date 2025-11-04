@@ -1006,7 +1006,7 @@ replace go.opentelemetry.io/collector/service/hostcapabilities => go.opentelemet
 
 replace go.opentelemetry.io/collector/featuregate => github.com/grafana/opentelemetry-collector/featuregate v0.0.0-20240325174506-2fd1623b2ca0
 
-replace github.com/fsnotify/fsnotify => github.com/fsnotify/fsnotify v1.7.0
+replace github.com/fsnotify/fsnotify v1.8.0 => github.com/fsnotify/fsnotify v1.7.0
 
 replace github.com/prometheus/prometheus => github.com/grafana/prometheus v1.8.2-0.20251030104821-c9e0b31e9aeb
 
@@ -1036,15 +1036,9 @@ replace github.com/prometheus/node_exporter => github.com/grafana/node_exporter 
 
 replace github.com/github/smimesign => github.com/grafana/smimesign v0.2.1-0.20220408144937-2a5adf3481d3
 
-replace go.opentelemetry.io/ebpf-profiler => github.com/grafana/opentelemetry-ebpf-profiler v0.0.202537-0.20250916114748-f2ff2fc6048c
-
 replace go.opentelemetry.io/obi => github.com/grafana/opentelemetry-ebpf-instrumentation v1.3.2
 
-replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.2.6
-
-replace github.com/deneonet/benc => github.com/deneonet/benc v1.1.7
-
-replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.20.4
+replace go.opentelemetry.io/ebpf-profiler => github.com/grafana/opentelemetry-ebpf-profiler v0.0.202537-0.20250916114748-f2ff2fc6048c
 
 replace github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20251015124057-db0dee36e235
 
@@ -1055,3 +1049,13 @@ replace go.opentelemetry.io/collector/pdata/pprofile => go.opentelemetry.io/coll
 replace go.opentelemetry.io/collector/pdata => go.opentelemetry.io/collector/pdata v1.41.0
 
 replace go.opentelemetry.io/collector/pdata/testdata => go.opentelemetry.io/collector/pdata/testdata v0.135.0
+
+replace go.opentelemetry.io/proto/slim/otlp/collector/profiles/v1development => go.opentelemetry.io/proto/slim/otlp/collector/profiles/v1development v0.0.1
+
+replace go.opentelemetry.io/proto/slim/otlp/profiles/v1development => go.opentelemetry.io/proto/slim/otlp/profiles/v1development v0.0.1
+
+replace github.com/deneonet/benc => github.com/deneonet/benc v1.1.7
+
+replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.2.6
+
+replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.20.4
