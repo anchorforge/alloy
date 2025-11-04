@@ -22,8 +22,9 @@ processors:
 receivers:
   - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.134.0
 
-connectors:
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/countconnector v0.134.0
+#connectors:
+#  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/countconnector v0.134.0
 
-replaces:
-  - go.opentelemetry.io/collector/pdata/pprofile => go.opentelemetry.io/collector/pdata/pprofile v0.135.0
+#replaces:
+#  - github.com/grafana/alloy/extension/alloyengine => ../extension/alloyengine
+#  - go.opentelemetry.io/collector/pdata/pprofile => go.opentelemetry.io/collector/pdata/pprofile v0.135.0
