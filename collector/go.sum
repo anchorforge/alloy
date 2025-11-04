@@ -1906,6 +1906,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkareceiver
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkareceiver v0.134.0/go.mod h1:/7gxhrwB57LA6sjQ/oznZmMww0anVl9DFbBwgYM6xfU=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver v0.133.0 h1:04eEfhfTzTXPkQdPPei3HuBGulJYypj2LG2T6zNzKNs=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver v0.133.0/go.mod h1:OCkhWl4FZD/ZfbVL4YVMEGbJMnWSOA9aqn98dDAAYZA=
+github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.139.1-0.20251104070254-02c05d16009d h1:mvHFXf0oVu5J9JsFJr5K4jQrFMCTLSqYEa7EvvWmwZc=
+github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.139.1-0.20251104070254-02c05d16009d/go.mod h1:vFQK4qK9VSkiy1JcoB2IALt2qfD6SrZI+CsNy2b3rLQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/solacereceiver v0.134.0 h1:W/6ChWdXE1CtlVowt//Y8KDpTfZWfihOn0d61wmC2iE=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/solacereceiver v0.134.0/go.mod h1:cby3qCubjht8OKnVTvAvF9f/AdFx3kDplXyLWOmuqpQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/splunkhecreceiver v0.134.0 h1:ZqTg+oeqz5ShHPt+fPBbf2afTi1tNXk1u0MSW/l5r2w=
@@ -2280,8 +2282,6 @@ github.com/testcontainers/testcontainers-go/modules/mongodb v0.34.0 h1:o3bgcECyB
 github.com/testcontainers/testcontainers-go/modules/mongodb v0.34.0/go.mod h1:ljLR42dN7k40CX0dp30R8BRIB3OOdvr7rBANEpfmMs4=
 github.com/tg123/go-htpasswd v1.2.4 h1:HgH8KKCjdmo7jjXWN9k1nefPBd7Be3tFCTjc2jPraPU=
 github.com/tg123/go-htpasswd v1.2.4/go.mod h1:EKThQok9xHkun6NBMynNv6Jmu24A33XdZzzl4Q7H1+0=
-github.com/thampiotr/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.0.0-20250916102911-5cee7db06eb3 h1:hjwMMkr5IX5+htuOIw8HsUfeEesXgOXjcO2agZnJttk=
-github.com/thampiotr/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.0.0-20250916102911-5cee7db06eb3/go.mod h1:Y4P8kAPmvADW/ZagZvdTT4AL4kCREIvbO/yTkDuS1Gc=
 github.com/tidwall/gjson v1.10.2/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=
 github.com/tidwall/gjson v1.18.0 h1:FIDeeyB800efLX89e5a8Y0BNH+LOngJyGrIWxG2FKQY=
 github.com/tidwall/gjson v1.18.0/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=

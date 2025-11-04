@@ -996,9 +996,13 @@ replace github.com/grafana/alloy/syntax => ../syntax
 
 replace github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheusremotewrite => github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheusremotewrite v0.130.0
 
-replace github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver => github.com/thampiotr/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.0.0-20250916102911-5cee7db06eb3
+replace github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver => github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.139.1-0.20251104070254-02c05d16009d
 
 replace github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter => github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter v0.130.0
+
+replace go.opentelemetry.io/collector/exporter/exporterhelper => go.opentelemetry.io/collector/exporter/exporterhelper v0.136.0
+
+replace go.opentelemetry.io/collector/service/hostcapabilities => go.opentelemetry.io/collector/service/hostcapabilities v0.134.0
 
 replace go.opentelemetry.io/collector/featuregate => github.com/grafana/opentelemetry-collector/featuregate v0.0.0-20240325174506-2fd1623b2ca0
 
@@ -1051,8 +1055,3 @@ replace go.opentelemetry.io/collector/pdata/pprofile => go.opentelemetry.io/coll
 replace go.opentelemetry.io/collector/pdata => go.opentelemetry.io/collector/pdata v1.41.0
 
 replace go.opentelemetry.io/collector/pdata/testdata => go.opentelemetry.io/collector/pdata/testdata v0.135.0
-
-// for compatability (we are bumping these down to match what's in alloy)
-replace go.opentelemetry.io/collector/exporter/exporterhelper => go.opentelemetry.io/collector/exporter/exporterhelper v0.136.0
-
-replace go.opentelemetry.io/collector/service/hostcapabilities => go.opentelemetry.io/collector/service/hostcapabilities v0.134.0

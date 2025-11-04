@@ -34,7 +34,8 @@ replaces:
 
   # Replace directives required for additional OCB components added above to be compatible with the rest of Alloy's dependencies.
   - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheusremotewrite => github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheusremotewrite v0.130.0
-  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver => github.com/thampiotr/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.0.0-20250916102911-5cee7db06eb3
+  # TODO: point to an official version or update to point to latest prometheus in Piotr's fork
+  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver => github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.139.1-0.20251104070254-02c05d16009d
   - github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter => github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter v0.130.0
 
   # Replace directives not present from main go.mod of Alloy, but required for compatability
