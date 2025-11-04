@@ -3,13 +3,14 @@ package alloyengine
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
 	"sync"
 
+	"github.com/grafana/alloy/extension/alloyengine/util"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/extension"
 	"go.uber.org/zap"
-
-	"github.com/spf13/cobra"
 )
 
 var _ extension.Extension = (*alloyEngineExtension)(nil)
@@ -39,24 +40,30 @@ func (s state) String() string {
 
 // alloyEngineExtension implements the alloyengine extension.
 type alloyEngineExtension struct {
-	config            *Config
-	settings          component.TelemetrySettings
-	runExited         chan struct{}
-	runCommandFactory func() *cobra.Command
+	config    *Config
+	settings  component.TelemetrySettings
+	runExited chan struct{}
+	alloyPath string
 
 	stateMutex sync.Mutex
 	state      state
 	runCancel  context.CancelFunc
+	runCmd     *exec.Cmd
 }
 
 // newAlloyEngineExtension creates a new alloyEngine extension instance.
-func newAlloyEngineExtension(config *Config, settings component.TelemetrySettings) *alloyEngineExtension {
-	return &alloyEngineExtension{
-		config:            config,
-		settings:          settings,
-		state:             stateNotStarted,
-		runCommandFactory: nil, // TODO
+func newAlloyEngineExtension(config *Config, settings component.TelemetrySettings) (*alloyEngineExtension, error) {
+	alloyPath, err := util.FindAlloyBinary()
+	if err != nil {
+		return nil, fmt.Errorf("failed to find alloy binary: %w", err)
 	}
+
+	return &alloyEngineExtension{
+		config:    config,
+		settings:  settings,
+		state:     stateNotStarted,
+		alloyPath: alloyPath,
+	}, nil
 }
 
 // Start is called when the extension is started.
@@ -71,20 +78,25 @@ func (e *alloyEngineExtension) Start(ctx context.Context, host component.Host) e
 		return fmt.Errorf("cannot start alloyengine extension in current state: %s", e.state.String())
 	}
 
-	runCommand := e.runCommandFactory()
-	runCommand.SetArgs([]string{e.config.ConfigPath})
-	err := runCommand.ParseFlags(e.config.flagsAsSlice())
-	if err != nil {
-		return fmt.Errorf("failed to parse flags: %w", err)
-	}
+	// Build command arguments: "run" + config path + flags
+	args := []string{"run", e.config.ConfigPath}
+	args = append(args, e.config.flagsAsSlice()...)
 
 	runCtx, runCancel := context.WithCancel(context.Background())
 	e.runCancel = runCancel
 	e.runExited = make(chan struct{})
 
+	// Create the command
+	cmd := exec.CommandContext(runCtx, e.alloyPath, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	cmd.Env = os.Environ()
+	e.runCmd = cmd
+
 	go func() {
 		defer close(e.runExited)
-		err := runCommand.ExecuteContext(runCtx)
+		err := cmd.Run()
 
 		e.stateMutex.Lock()
 		previousState := e.state
