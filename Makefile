@@ -184,15 +184,18 @@ test-pyroscope:
 # Targets for building binaries
 #
 
-.PHONY: binaries alloy
+.PHONY: binaries alloy generate-collector
 binaries: alloy
 
-alloy:
+alloy: generate-collector
 ifeq ($(USE_CONTAINER),1)
 	$(RERUN_IN_CONTAINER)
 else
 	$(GO_ENV) go build $(GO_FLAGS) -o $(ALLOY_BINARY) .
 endif
+
+generate-collector:
+	cd collector && go generate
 
 # alloy-service is not included in binaries since it's Windows-only.
 alloy-service:
