@@ -223,7 +223,6 @@ func (tr *TableRegistry) SetTablesForDatabase(database string, tables []*tableIn
 
 	delete(tr.tables, database)
 
-	// Add all tables for this database
 	if len(tables) > 0 {
 		tr.tables[database] = make(map[string]map[string]bool)
 		for _, table := range tables {
@@ -330,21 +329,18 @@ func (c *SchemaDetails) Start(ctx context.Context) error {
 			c.running.Store(false)
 		}()
 
-		// Run initial collection immediately
-		if err := c.extractNames(c.ctx); err != nil {
-			level.Error(c.logger).Log("msg", "initial collection error", "err", err)
-		}
-
 		ticker := time.NewTicker(c.collectInterval)
 
 		for {
+			if err := c.extractNames(c.ctx); err != nil {
+				level.Error(c.logger).Log("msg", "collector error", "err", err)
+			}
+
 			select {
 			case <-c.ctx.Done():
 				return
 			case <-ticker.C:
-				if err := c.extractNames(c.ctx); err != nil {
-					level.Error(c.logger).Log("msg", "collector error", "err", err)
-				}
+				// continue loop
 			}
 		}
 	}()

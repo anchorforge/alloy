@@ -369,28 +369,6 @@ func (c *Component) startCollectors(systemID string, engineVersion string) error
 	collectors := enableOrDisableCollectors(c.args)
 
 	var tableRegistry *collector.TableRegistry
-	if collectors[collector.SchemaDetailsCollector] {
-		stCollector, err := collector.NewSchemaDetails(collector.SchemaDetailsArguments{
-			DB:              c.dbConnection,
-			DSN:             string(c.args.DataSourceName),
-			CollectInterval: c.args.SchemaDetailsArguments.CollectInterval,
-			CacheEnabled:    c.args.SchemaDetailsArguments.CacheEnabled,
-			CacheSize:       c.args.SchemaDetailsArguments.CacheSize,
-			CacheTTL:        c.args.SchemaDetailsArguments.CacheTTL,
-			EntryHandler:    entryHandler,
-			Logger:          c.opts.Logger,
-		})
-		if err != nil {
-			logStartError(collector.SchemaDetailsCollector, "create", err)
-		} else {
-			if err := stCollector.Start(context.Background()); err != nil {
-				logStartError(collector.SchemaDetailsCollector, "start", err)
-			}
-			c.collectors = append(c.collectors, stCollector)
-			tableRegistry = stCollector.GetTableRegistry()
-		}
-	}
-
 	if collectors[collector.QueryDetailsCollector] {
 		qCollector, err := collector.NewQueryDetails(collector.QueryDetailsArguments{
 			DB:              c.dbConnection,
@@ -423,6 +401,28 @@ func (c *Component) startCollectors(systemID string, engineVersion string) error
 			logStartError(collector.QuerySamplesCollector, "start", err)
 		}
 		c.collectors = append(c.collectors, aCollector)
+	}
+
+	if collectors[collector.SchemaDetailsCollector] {
+		stCollector, err := collector.NewSchemaDetails(collector.SchemaDetailsArguments{
+			DB:              c.dbConnection,
+			DSN:             string(c.args.DataSourceName),
+			CollectInterval: c.args.SchemaDetailsArguments.CollectInterval,
+			CacheEnabled:    c.args.SchemaDetailsArguments.CacheEnabled,
+			CacheSize:       c.args.SchemaDetailsArguments.CacheSize,
+			CacheTTL:        c.args.SchemaDetailsArguments.CacheTTL,
+			EntryHandler:    entryHandler,
+			Logger:          c.opts.Logger,
+		})
+		if err != nil {
+			logStartError(collector.SchemaDetailsCollector, "create", err)
+		} else {
+			if err := stCollector.Start(context.Background()); err != nil {
+				logStartError(collector.SchemaDetailsCollector, "start", err)
+			}
+			c.collectors = append(c.collectors, stCollector)
+			tableRegistry = stCollector.GetTableRegistry()
+		}
 	}
 
 	// Connection Info collector is always enabled
