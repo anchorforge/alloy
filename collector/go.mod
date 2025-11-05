@@ -997,11 +997,11 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
+replace github.com/grafana/alloy/extension/alloyengine => ../extension/alloyengine
+
 replace github.com/grafana/alloy => ../
 
 replace github.com/grafana/alloy/syntax => ../syntax
-
-replace github.com/grafana/alloy/extension/alloyengine => ../extension/alloyengine
 
 replace go.opentelemetry.io/collector/featuregate => github.com/grafana/opentelemetry-collector/featuregate v0.0.0-20240325174506-2fd1623b2ca0
 
@@ -1035,16 +1035,16 @@ replace github.com/prometheus/node_exporter => github.com/grafana/node_exporter 
 
 replace github.com/github/smimesign => github.com/grafana/smimesign v0.2.1-0.20220408144937-2a5adf3481d3
 
-replace go.opentelemetry.io/ebpf-profiler => github.com/grafana/opentelemetry-ebpf-profiler v0.0.202546-0.20251106085643-a00a0ef2a84c
-
 replace go.opentelemetry.io/obi => github.com/grafana/opentelemetry-ebpf-instrumentation v1.3.7
 
-replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.2.8
-
-replace github.com/deneonet/benc => github.com/deneonet/benc v1.1.7
-
-replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.20.4
+replace go.opentelemetry.io/ebpf-profiler => github.com/grafana/opentelemetry-ebpf-profiler v0.0.202546-0.20251106085643-a00a0ef2a84c
 
 replace github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20251015124057-db0dee36e235
 
 replace github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor => github.com/grafana/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.0.0-20251021125353-73458b01ab23
+
+replace github.com/deneonet/benc => github.com/deneonet/benc v1.1.7
+
+replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.2.8
+
+replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.20.4
