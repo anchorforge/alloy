@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-kit/log"
@@ -205,6 +206,49 @@ type foreignKey struct {
 	ReferencedColumnName string `json:"referenced_column_name"`
 }
 
+type TableRegistry struct {
+	mu     sync.RWMutex
+	tables map[string]map[string]map[string]bool
+}
+
+func NewTableRegistry() *TableRegistry {
+	return &TableRegistry{
+		tables: make(map[string]map[string]map[string]bool),
+	}
+}
+
+func (tr *TableRegistry) SetTablesForDatabase(database string, tables []*tableInfo) {
+	tr.mu.Lock()
+	defer tr.mu.Unlock()
+
+	delete(tr.tables, database)
+
+	// Add all tables for this database
+	if len(tables) > 0 {
+		tr.tables[database] = make(map[string]map[string]bool)
+		for _, table := range tables {
+			if tr.tables[database][table.schema] == nil {
+				tr.tables[database][table.schema] = make(map[string]bool)
+			}
+			tr.tables[database][table.schema][table.tableName] = true
+		}
+	}
+}
+
+func (tr *TableRegistry) IsValidTable(database, table string) bool {
+	tr.mu.RLock()
+	defer tr.mu.RUnlock()
+
+	if schemas, ok := tr.tables[database]; ok {
+		for _, tables := range schemas {
+			if tables[table] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 type SchemaDetailsArguments struct {
 	DB              *sql.DB
 	DSN             string
@@ -232,6 +276,8 @@ type SchemaDetails struct {
 	// (unlike MySQL) no create/update timestamp available for detecting immediately when a table schema is changed; relying on TTL only
 	cache *expirable.LRU[string, *tableInfo]
 
+	tableRegistry *TableRegistry
+
 	logger  log.Logger
 	running *atomic.Bool
 	ctx     context.Context
@@ -250,6 +296,7 @@ func NewSchemaDetails(args SchemaDetailsArguments) (*SchemaDetails, error) {
 		dbConnectionFactory: factory,
 		collectInterval:     args.CollectInterval,
 		entryHandler:        args.EntryHandler,
+		tableRegistry:       NewTableRegistry(),
 		logger:              log.With(args.Logger, "collector", SchemaDetailsCollector),
 		running:             &atomic.Bool{},
 	}
@@ -263,6 +310,10 @@ func NewSchemaDetails(args SchemaDetailsArguments) (*SchemaDetails, error) {
 
 func (c *SchemaDetails) Name() string {
 	return SchemaDetailsCollector
+}
+
+func (c *SchemaDetails) GetTableRegistry() *TableRegistry {
+	return c.tableRegistry
 }
 
 func (c *SchemaDetails) Start(ctx context.Context) error {
@@ -279,18 +330,21 @@ func (c *SchemaDetails) Start(ctx context.Context) error {
 			c.running.Store(false)
 		}()
 
+		// Run initial collection immediately
+		if err := c.extractNames(c.ctx); err != nil {
+			level.Error(c.logger).Log("msg", "initial collection error", "err", err)
+		}
+
 		ticker := time.NewTicker(c.collectInterval)
 
 		for {
-			if err := c.extractNames(c.ctx); err != nil {
-				level.Error(c.logger).Log("msg", "collector error", "err", err)
-			}
-
 			select {
 			case <-c.ctx.Done():
 				return
 			case <-ticker.C:
-				// continue loop
+				if err := c.extractNames(c.ctx); err != nil {
+					level.Error(c.logger).Log("msg", "collector error", "err", err)
+				}
 			}
 		}
 	}()
@@ -399,6 +453,8 @@ func (c *SchemaDetails) extractSchemas(ctx context.Context, dbName string, dbCon
 			return fmt.Errorf("failed to iterate over tables result set for database %s: %w", dbName, err)
 		}
 	}
+
+	c.tableRegistry.SetTablesForDatabase(dbName, tables)
 
 	if len(tables) == 0 {
 		level.Info(c.logger).Log("msg", "no tables detected from pg_tables", "datname", dbName)

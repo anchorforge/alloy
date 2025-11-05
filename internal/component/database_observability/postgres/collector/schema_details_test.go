@@ -1525,3 +1525,50 @@ func Test_Postgres_SchemaDetails_ErrorCases(t *testing.T) {
 		require.NoError(t, mock.ExpectationsWereMet())
 	})
 }
+
+func TestTableRegistry_IsValidTable(t *testing.T) {
+	t.Run("table exists in registry", func(t *testing.T) {
+		tr := NewTableRegistry()
+		tr.SetTablesForDatabase("mydb", []*tableInfo{
+			{database: "mydb", schema: "public", tableName: "users"},
+			{database: "mydb", schema: "public", tableName: "orders"},
+		})
+
+		require.True(t, tr.IsValidTable("mydb", "users"))
+		require.True(t, tr.IsValidTable("mydb", "orders"))
+	})
+
+	t.Run("table does not exist in registry", func(t *testing.T) {
+		tr := NewTableRegistry()
+		tr.SetTablesForDatabase("mydb", []*tableInfo{
+			{database: "mydb", schema: "public", tableName: "users"},
+		})
+
+		require.False(t, tr.IsValidTable("mydb", "nonexistent"))
+	})
+
+	t.Run("database does not exist", func(t *testing.T) {
+		tr := NewTableRegistry()
+		tr.SetTablesForDatabase("mydb", []*tableInfo{
+			{database: "mydb", schema: "public", tableName: "users"},
+		})
+
+		require.False(t, tr.IsValidTable("otherdb", "users"))
+	})
+
+	t.Run("empty registry", func(t *testing.T) {
+		tr := NewTableRegistry()
+
+		require.False(t, tr.IsValidTable("mydb", "users"))
+	})
+
+	t.Run("table exists in multiple schemas", func(t *testing.T) {
+		tr := NewTableRegistry()
+		tr.SetTablesForDatabase("mydb", []*tableInfo{
+			{database: "mydb", schema: "public", tableName: "users"},
+			{database: "mydb", schema: "private", tableName: "users"},
+		})
+
+		require.True(t, tr.IsValidTable("mydb", "users"))
+	})
+}

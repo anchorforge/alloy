@@ -23,6 +23,7 @@ func TestQueryDetails(t *testing.T) {
 		eventStatementsRows [][]driver.Value
 		logsLabels          []model.LabelSet
 		logsLines           []string
+		tableRegistry       *TableRegistry
 	}{
 		{
 			name: "select query",
@@ -37,8 +38,19 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"abc123\" querytext=\"SELECT * FROM some_table WHERE id = $1\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="true"`,
 			},
+			tableRegistry: func() *TableRegistry {
+				tr := NewTableRegistry()
+				tr.SetTablesForDatabase("some_database", []*tableInfo{
+					{
+						database:  "some_database",
+						schema:    "public",
+						tableName: "some_table",
+					},
+				})
+				return tr
+			}(),
 		},
 		{
 			name: "select query containing with",
@@ -53,7 +65,7 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"abc123\" querytext=\"WITH some_with_table AS (SELECT * FROM some_table WHERE id = $1) SELECT * FROM some_with_table\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`,
 			},
 		},
 		{
@@ -69,7 +81,7 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"abc123\" querytext=\"INSERT INTO some_table (id, name) VALUES (...)\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`,
 			},
 		},
 		{
@@ -86,8 +98,8 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"abc123\" querytext=\"WITH some_with_table AS (SELECT id, name FROM some_other_table WHERE id = $1) INSERT INTO some_table (id, name) SELECT id, name FROM some_with_table\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="some_other_table" engine="postgres"`,
-				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_other_table" engine="postgres" validated="false"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`,
 			},
 		},
 		{
@@ -103,7 +115,7 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"abc123\" querytext=\"UPDATE some_table SET active = false, reason = ? WHERE id = $1 AND name = $2\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`,
 			},
 		},
 		{
@@ -119,7 +131,7 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"abc123\" querytext=\"DELETE FROM some_table WHERE id = $1\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`,
 			},
 		},
 		{
@@ -136,8 +148,8 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"abc123\" querytext=\"WITH some_with_table AS (SELECT id, name FROM some_other_table WHERE id = $1) DELETE FROM some_table WHERE id IN (SELECT id FROM some_with_table)\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="some_other_table" engine="postgres"`,
-				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_other_table" engine="postgres" validated="false"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`,
 			},
 		},
 		{
@@ -154,8 +166,8 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"abc123\" querytext=\"SELECT t.id, t.val1, o.val2 FROM some_table t INNER JOIN other_table AS o ON t.id = o.id WHERE o.val2 = $1 ORDER BY t.val1 DESC\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`,
-				`level="info" queryid="abc123" datname="some_database" table="other_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`,
+				`level="info" queryid="abc123" datname="some_database" table="other_table" engine="postgres" validated="false"`,
 			},
 		},
 		{
@@ -177,9 +189,9 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"xyz456\" querytext=\"INSERT INTO some_table...\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="xyz456" datname="some_database" table="some_table" engine="postgres"`,
+				`level="info" queryid="xyz456" datname="some_database" table="some_table" engine="postgres" validated="false"`,
 				"level=\"info\" queryid=\"abc123\" querytext=\"SELECT * FROM another_table WHERE id = $1\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="another_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="another_table" engine="postgres" validated="false"`,
 			},
 		},
 		{
@@ -195,7 +207,7 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"abc123\" querytext=\"SELECT * FROM some_table WHERE id = $1 AND name =\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`,
 			},
 		},
 		{
@@ -231,7 +243,7 @@ func TestQueryDetails(t *testing.T) {
 			logsLines: []string{
 				"level=\"info\" queryid=\"xyz456\" querytext=\"not valid sql\" datname=\"some_database\" engine=\"postgres\"",
 				"level=\"info\" queryid=\"abc123\" querytext=\"SELECT * FROM some_table WHERE id = $1\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`,
 			},
 		},
 		{
@@ -253,9 +265,9 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"abc123\" querytext=\"SELECT * FROM some_table WHERE id = $1\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`,
 				"level=\"info\" queryid=\"abc123\" querytext=\"SELECT * FROM some_table WHERE id = $1\" datname=\"other_schema\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="other_schema" table="some_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="other_schema" table="some_table" engine="postgres" validated="false"`,
 			},
 		},
 		{
@@ -273,9 +285,9 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"abc123\" querytext=\"SELECT * FROM (SELECT id, name FROM employees_us_east UNION SELECT id, name FROM employees_us_west) AS employees_us UNION SELECT id, name FROM employees_emea\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="employees_us_east" engine="postgres"`,
-				`level="info" queryid="abc123" datname="some_database" table="employees_us_west" engine="postgres"`,
-				`level="info" queryid="abc123" datname="some_database" table="employees_emea" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="employees_us_east" engine="postgres" validated="false"`,
+				`level="info" queryid="abc123" datname="some_database" table="employees_us_west" engine="postgres" validated="false"`,
+				`level="info" queryid="abc123" datname="some_database" table="employees_emea" engine="postgres" validated="false"`,
 			},
 		},
 		{
@@ -291,7 +303,7 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"abc123\" querytext=\"SHOW CREATE TABLE some_table\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`,
 			},
 		},
 		{
@@ -321,7 +333,7 @@ func TestQueryDetails(t *testing.T) {
 			},
 			logsLines: []string{
 				"level=\"info\" queryid=\"abc123\" querytext=\"SELECT * FROM some_table WHERE\" datname=\"some_database\" engine=\"postgres\"",
-				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`,
+				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`,
 			},
 		},
 	}
@@ -340,6 +352,7 @@ func TestQueryDetails(t *testing.T) {
 				DB:              db,
 				CollectInterval: time.Second,
 				EntryHandler:    lokiClient,
+				TableRegistry:   tc.tableRegistry,
 				Logger:          log.NewLogfmtLogger(os.Stderr),
 			})
 			require.NoError(t, err)
@@ -446,7 +459,7 @@ func TestQueryDetails_SQLDriverErrors(t *testing.T) {
 		require.Equal(t, model.LabelSet{"op": OP_QUERY_ASSOCIATION}, lokiEntries[0].Labels)
 		require.Equal(t, "level=\"info\" queryid=\"abc123\" querytext=\"SELECT * FROM some_table WHERE id = ?\" datname=\"some_database\" engine=\"postgres\"", lokiEntries[0].Line)
 		require.Equal(t, model.LabelSet{"op": OP_QUERY_PARSED_TABLE_NAME}, lokiEntries[1].Labels)
-		require.Equal(t, `level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`, lokiEntries[1].Line)
+		require.Equal(t, `level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`, lokiEntries[1].Line)
 	})
 
 	t.Run("result set iteration error", func(t *testing.T) {
@@ -505,7 +518,7 @@ func TestQueryDetails_SQLDriverErrors(t *testing.T) {
 		require.Equal(t, model.LabelSet{"op": OP_QUERY_ASSOCIATION}, lokiEntries[0].Labels)
 		require.Equal(t, "level=\"info\" queryid=\"abc123\" querytext=\"SELECT * FROM some_table WHERE id = ?\" datname=\"some_database\" engine=\"postgres\"", lokiEntries[0].Line)
 		require.Equal(t, model.LabelSet{"op": OP_QUERY_PARSED_TABLE_NAME}, lokiEntries[1].Labels)
-		require.Equal(t, `level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`, lokiEntries[1].Line)
+		require.Equal(t, `level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`, lokiEntries[1].Line)
 	})
 
 	t.Run("connection error recovery", func(t *testing.T) {
@@ -562,6 +575,6 @@ func TestQueryDetails_SQLDriverErrors(t *testing.T) {
 		require.Equal(t, model.LabelSet{"op": OP_QUERY_ASSOCIATION}, lokiEntries[0].Labels)
 		require.Equal(t, "level=\"info\" queryid=\"abc123\" querytext=\"SELECT * FROM some_table WHERE id = ?\" datname=\"some_database\" engine=\"postgres\"", lokiEntries[0].Line)
 		require.Equal(t, model.LabelSet{"op": OP_QUERY_PARSED_TABLE_NAME}, lokiEntries[1].Labels)
-		require.Equal(t, `level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres"`, lokiEntries[1].Line)
+		require.Equal(t, `level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="false"`, lokiEntries[1].Line)
 	})
 }
