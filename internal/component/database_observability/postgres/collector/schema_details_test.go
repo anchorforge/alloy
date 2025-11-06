@@ -1526,50 +1526,59 @@ func Test_Postgres_SchemaDetails_ErrorCases(t *testing.T) {
 	})
 }
 
-func TestTableRegistry_IsValidTable(t *testing.T) {
-	t.Run("table exists in registry", func(t *testing.T) {
+func Test_TableRegistry_IsValid(t *testing.T) {
+	t.Run("returns true when table exists in registry", func(t *testing.T) {
 		tr := NewTableRegistry()
 		tr.SetTablesForDatabase("mydb", []*tableInfo{
 			{database: "mydb", schema: "public", tableName: "users"},
 			{database: "mydb", schema: "public", tableName: "orders"},
 		})
 
-		require.True(t, tr.IsValid("mydb", "users"))
-		require.True(t, tr.IsValid("mydb", "orders"))
+		assert.True(t, tr.IsValid("mydb", "users"))
+		assert.True(t, tr.IsValid("mydb", "orders"))
 	})
 
-	t.Run("table does not exist in registry", func(t *testing.T) {
+	t.Run("returns false when table does not exist in registry", func(t *testing.T) {
 		tr := NewTableRegistry()
 		tr.SetTablesForDatabase("mydb", []*tableInfo{
 			{database: "mydb", schema: "public", tableName: "users"},
 		})
 
-		require.False(t, tr.IsValid("mydb", "nonexistent"))
+		assert.False(t, tr.IsValid("mydb", "nonexistent"))
 	})
 
-	t.Run("database does not exist", func(t *testing.T) {
+	t.Run("returns false given nonexistent database", func(t *testing.T) {
 		tr := NewTableRegistry()
 		tr.SetTablesForDatabase("mydb", []*tableInfo{
 			{database: "mydb", schema: "public", tableName: "users"},
 		})
 
-		require.False(t, tr.IsValid("otherdb", "users"))
+		assert.False(t, tr.IsValid("otherdb", "users"))
 	})
 
-	t.Run("empty registry", func(t *testing.T) {
+	t.Run("returns false for empty registry", func(t *testing.T) {
 		tr := NewTableRegistry()
 
-		require.False(t, tr.IsValid("mydb", "users"))
+		assert.False(t, tr.IsValid("mydb", "users"))
 	})
 
-	t.Run("table exists in multiple schemas", func(t *testing.T) {
+	t.Run("returns true when table exists in multiple schemas", func(t *testing.T) {
 		tr := NewTableRegistry()
 		tr.SetTablesForDatabase("mydb", []*tableInfo{
 			{database: "mydb", schema: "public", tableName: "users"},
 			{database: "mydb", schema: "private", tableName: "users"},
 		})
 
-		require.True(t, tr.IsValid("mydb", "users"))
+		assert.True(t, tr.IsValid("mydb", "users"))
+	})
+
+	t.Run("returns true when schema-qualified table exists", func(t *testing.T) {
+		tr := NewTableRegistry()
+		tr.SetTablesForDatabase("mydb", []*tableInfo{
+			{database: "mydb", schema: "private", tableName: "users"},
+		})
+
+		assert.True(t, tr.IsValid("mydb", "private.users"))
 	})
 }
 

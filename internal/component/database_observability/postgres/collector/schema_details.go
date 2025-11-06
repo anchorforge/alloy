@@ -206,6 +206,7 @@ type foreignKey struct {
 	ReferencedColumnName string `json:"referenced_column_name"`
 }
 
+// TableRegistry is a source-of-truth table registry keeps track of databases, schemas, tables
 type TableRegistry struct {
 	mu     sync.RWMutex
 	tables map[string]map[string]map[string]bool // map[database]map[schema]map[table]bool
