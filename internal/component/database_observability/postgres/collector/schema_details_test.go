@@ -1534,8 +1534,8 @@ func TestTableRegistry_IsValidTable(t *testing.T) {
 			{database: "mydb", schema: "public", tableName: "orders"},
 		})
 
-		require.True(t, tr.IsValidTable("mydb", "users"))
-		require.True(t, tr.IsValidTable("mydb", "orders"))
+		require.True(t, tr.IsValid("mydb", "users"))
+		require.True(t, tr.IsValid("mydb", "orders"))
 	})
 
 	t.Run("table does not exist in registry", func(t *testing.T) {
@@ -1544,7 +1544,7 @@ func TestTableRegistry_IsValidTable(t *testing.T) {
 			{database: "mydb", schema: "public", tableName: "users"},
 		})
 
-		require.False(t, tr.IsValidTable("mydb", "nonexistent"))
+		require.False(t, tr.IsValid("mydb", "nonexistent"))
 	})
 
 	t.Run("database does not exist", func(t *testing.T) {
@@ -1553,13 +1553,13 @@ func TestTableRegistry_IsValidTable(t *testing.T) {
 			{database: "mydb", schema: "public", tableName: "users"},
 		})
 
-		require.False(t, tr.IsValidTable("otherdb", "users"))
+		require.False(t, tr.IsValid("otherdb", "users"))
 	})
 
 	t.Run("empty registry", func(t *testing.T) {
 		tr := NewTableRegistry()
 
-		require.False(t, tr.IsValidTable("mydb", "users"))
+		require.False(t, tr.IsValid("mydb", "users"))
 	})
 
 	t.Run("table exists in multiple schemas", func(t *testing.T) {
@@ -1569,7 +1569,7 @@ func TestTableRegistry_IsValidTable(t *testing.T) {
 			{database: "mydb", schema: "private", tableName: "users"},
 		})
 
-		require.True(t, tr.IsValidTable("mydb", "users"))
+		require.True(t, tr.IsValid("mydb", "users"))
 	})
 }
 

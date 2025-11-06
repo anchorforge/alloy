@@ -234,30 +234,45 @@ func (tr *TableRegistry) SetTablesForDatabase(database string, tables []*tableIn
 	}
 }
 
-func (tr *TableRegistry) IsValidTable(database, table string) bool {
+// IsValid returns whether or not a given database and parsed table name exists in the source-of-truth table registry
+func (tr *TableRegistry) IsValid(database, parsedTableName string) bool {
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
 
-	if schemas, ok := tr.tables[database]; ok {
+	schemas, ok := tr.tables[database]
+	if !ok {
+		return false
+	}
+
+	schemaName, tableName := parseSchemaQualifiedIfAny(parsedTableName)
+	switch schemaName {
+	case "": // parsedTableName isn't schema-qualified, e.g. SELECT * FROM table_name.
+		// can only be validated as "exists somewhere in the database", see limitation: https://github.com/grafana/grafana-dbo11y-app/issues/1838
 		for _, tables := range schemas {
-			if tables[table] {
+			if tables[tableName] {
 				return true
 			}
 		}
+	default: // parsedTableName is schema-qualified, e.g. SELECT * FROM schema_name.table_name
+		if tables, ok := schemas[schemaName]; ok {
+			return tables[tableName]
+		}
 	}
+
 	return false
 }
 
-func (tr *TableRegistry) IsValidTableInSchema(database, schema, table string) bool {
-	tr.mu.RLock()
-	defer tr.mu.RUnlock()
-
-	if schemas, ok := tr.tables[database]; ok {
-		if tables, ok := schemas[schema]; ok {
-			return tables[table]
-		}
+// parseSchemaQualifiedIfAny returns separate schema and table if the parsedTableName is schema-qualified, e.g. SELECT * FROM schema_name.table_name
+func parseSchemaQualifiedIfAny(parsedTableName string) (string, string) {
+	parts := strings.SplitN(parsedTableName, ".", 2)
+	if len(parts) == 2 {
+		return parts[0], parts[1]
 	}
-	return false
+	return "", parsedTableName
+}
+
+func (tr *TableRegistry) IsValidTableInSchema(database, schema, table string) bool {
+	return tr.IsValid(database, schema+"."+table)
 }
 
 type SchemaDetailsArguments struct {
