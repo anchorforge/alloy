@@ -369,42 +369,12 @@ func (c *Component) startCollectors(systemID string, engineVersion string) error
 	collectors := enableOrDisableCollectors(c.args)
 
 	var tableRegistry *collector.TableRegistry
-	if collectors[collector.QueryDetailsCollector] {
-		qCollector, err := collector.NewQueryDetails(collector.QueryDetailsArguments{
-			DB:              c.dbConnection,
-			CollectInterval: c.args.QueryTablesArguments.CollectInterval,
-			EntryHandler:    entryHandler,
-			TableRegistry:   tableRegistry,
-			Logger:          c.opts.Logger,
-		})
-		if err != nil {
-			logStartError(collector.QueryDetailsCollector, "create", err)
-		}
-		if err := qCollector.Start(context.Background()); err != nil {
-			logStartError(collector.QueryDetailsCollector, "start", err)
-		}
-		c.collectors = append(c.collectors, qCollector)
-	}
-
-	if collectors[collector.QuerySamplesCollector] {
-		aCollector, err := collector.NewQuerySamples(collector.QuerySamplesArguments{
-			DB:                    c.dbConnection,
-			CollectInterval:       c.args.QuerySampleArguments.CollectInterval,
-			EntryHandler:          entryHandler,
-			Logger:                c.opts.Logger,
-			DisableQueryRedaction: c.args.QuerySampleArguments.DisableQueryRedaction,
-		})
-		if err != nil {
-			logStartError(collector.QuerySamplesCollector, "create", err)
-		}
-		if err := aCollector.Start(context.Background()); err != nil {
-			logStartError(collector.QuerySamplesCollector, "start", err)
-		}
-		c.collectors = append(c.collectors, aCollector)
-	}
+	var stCollector *collector.SchemaDetails
+	var qCollector *collector.QueryDetails
 
 	if collectors[collector.SchemaDetailsCollector] {
-		stCollector, err := collector.NewSchemaDetails(collector.SchemaDetailsArguments{
+		var err error
+		stCollector, err = collector.NewSchemaDetails(collector.SchemaDetailsArguments{
 			DB:              c.dbConnection,
 			DSN:             string(c.args.DataSourceName),
 			CollectInterval: c.args.SchemaDetailsArguments.CollectInterval,
@@ -417,11 +387,55 @@ func (c *Component) startCollectors(systemID string, engineVersion string) error
 		if err != nil {
 			logStartError(collector.SchemaDetailsCollector, "create", err)
 		} else {
-			if err := stCollector.Start(context.Background()); err != nil {
-				logStartError(collector.SchemaDetailsCollector, "start", err)
-			}
-			c.collectors = append(c.collectors, stCollector)
 			tableRegistry = stCollector.GetTableRegistry()
+		}
+	}
+
+	if collectors[collector.QueryDetailsCollector] {
+		var err error
+		qCollector, err = collector.NewQueryDetails(collector.QueryDetailsArguments{
+			DB:              c.dbConnection,
+			CollectInterval: c.args.QueryTablesArguments.CollectInterval,
+			EntryHandler:    entryHandler,
+			TableRegistry:   tableRegistry,
+			Logger:          c.opts.Logger,
+		})
+		if err != nil {
+			logStartError(collector.QueryDetailsCollector, "create", err)
+		}
+	}
+
+	if collectors[collector.QuerySamplesCollector] {
+		aCollector, err := collector.NewQuerySamples(collector.QuerySamplesArguments{
+			DB:                    c.dbConnection,
+			CollectInterval:       c.args.QuerySampleArguments.CollectInterval,
+			EntryHandler:          entryHandler,
+			Logger:                c.opts.Logger,
+			DisableQueryRedaction: c.args.QuerySampleArguments.DisableQueryRedaction,
+		})
+		if err != nil {
+			logStartError(collector.QuerySamplesCollector, "create", err)
+		} else {
+			if err := aCollector.Start(context.Background()); err != nil {
+				logStartError(collector.QuerySamplesCollector, "start", err)
+			}
+			c.collectors = append(c.collectors, aCollector)
+		}
+	}
+
+	if stCollector != nil {
+		if err := stCollector.Start(context.Background()); err != nil {
+			logStartError(collector.SchemaDetailsCollector, "start", err)
+		} else {
+			c.collectors = append(c.collectors, stCollector)
+		}
+	}
+
+	if qCollector != nil {
+		if err := qCollector.Start(context.Background()); err != nil {
+			logStartError(collector.QueryDetailsCollector, "start", err)
+		} else {
+			c.collectors = append(c.collectors, qCollector)
 		}
 	}
 

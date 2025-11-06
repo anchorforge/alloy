@@ -263,17 +263,13 @@ func (tr *TableRegistry) IsValid(database, parsedTableName string) bool {
 	return false
 }
 
-// parseSchemaQualifiedIfAny returns separate schema and table if the parsedTableName is schema-qualified, e.g. SELECT * FROM schema_name.table_name
+// parseSchemaQualifiedIfAny returns separated schema and table if the parsedTableName is schema-qualified, e.g. SELECT * FROM schema_name.table_name
 func parseSchemaQualifiedIfAny(parsedTableName string) (string, string) {
 	parts := strings.SplitN(parsedTableName, ".", 2)
 	if len(parts) == 2 {
 		return parts[0], parts[1]
 	}
 	return "", parsedTableName
-}
-
-func (tr *TableRegistry) IsValidTableInSchema(database, schema, table string) bool {
-	return tr.IsValid(database, schema+"."+table)
 }
 
 type SchemaDetailsArguments struct {
