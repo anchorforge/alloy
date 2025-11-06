@@ -152,8 +152,13 @@ func (c QueryDetails) fetchAndAssociate(ctx context.Context) error {
 
 		for _, table := range tables {
 			validated := false
-			if c.tableRegistry != nil && c.tableRegistry.IsValidTable(databaseName, table) {
-				validated = true
+			if c.tableRegistry != nil {
+				if parts := strings.SplitN(table, ".", 2); len(parts) == 2 {
+					schema, tableName := parts[0], parts[1]
+					validated = c.tableRegistry.IsValidTableInSchema(databaseName, schema, tableName)
+				} else {
+					validated = c.tableRegistry.IsValidTable(databaseName, table)
+				}
 			}
 
 			c.entryHandler.Chan() <- database_observability.BuildLokiEntry(

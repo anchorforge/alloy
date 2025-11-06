@@ -1572,3 +1572,43 @@ func TestTableRegistry_IsValidTable(t *testing.T) {
 		require.True(t, tr.IsValidTable("mydb", "users"))
 	})
 }
+
+func TestTableRegistry_IsValidTableInSchema(t *testing.T) {
+	t.Run("table exists in specified schema", func(t *testing.T) {
+		tr := NewTableRegistry()
+		tr.SetTablesForDatabase("mydb", []*tableInfo{
+			{database: "mydb", schema: "public", tableName: "users"},
+			{database: "mydb", schema: "sales", tableName: "orders"},
+		})
+
+		require.True(t, tr.IsValidTableInSchema("mydb", "public", "users"))
+		require.True(t, tr.IsValidTableInSchema("mydb", "sales", "orders"))
+	})
+
+	t.Run("table exists in different schema", func(t *testing.T) {
+		tr := NewTableRegistry()
+		tr.SetTablesForDatabase("mydb", []*tableInfo{
+			{database: "mydb", schema: "public", tableName: "users"},
+		})
+
+		require.False(t, tr.IsValidTableInSchema("mydb", "sales", "users"))
+	})
+
+	t.Run("schema does not exist", func(t *testing.T) {
+		tr := NewTableRegistry()
+		tr.SetTablesForDatabase("mydb", []*tableInfo{
+			{database: "mydb", schema: "public", tableName: "users"},
+		})
+
+		require.False(t, tr.IsValidTableInSchema("mydb", "nonexistent", "users"))
+	})
+
+	t.Run("database does not exist", func(t *testing.T) {
+		tr := NewTableRegistry()
+		tr.SetTablesForDatabase("mydb", []*tableInfo{
+			{database: "mydb", schema: "public", tableName: "users"},
+		})
+
+		require.False(t, tr.IsValidTableInSchema("otherdb", "public", "users"))
+	})
+}

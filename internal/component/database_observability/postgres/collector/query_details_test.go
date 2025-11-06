@@ -9,10 +9,11 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-kit/log"
-	loki_fake "github.com/grafana/alloy/internal/component/common/loki/client/fake"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
+
+	loki_fake "github.com/grafana/alloy/internal/component/common/loki/client/fake"
 )
 
 func TestQueryDetails(t *testing.T) {
@@ -40,17 +41,40 @@ func TestQueryDetails(t *testing.T) {
 				"level=\"info\" queryid=\"abc123\" querytext=\"SELECT * FROM some_table WHERE id = $1\" datname=\"some_database\" engine=\"postgres\"",
 				`level="info" queryid="abc123" datname="some_database" table="some_table" engine="postgres" validated="true"`,
 			},
-			tableRegistry: func() *TableRegistry {
-				tr := NewTableRegistry()
-				tr.SetTablesForDatabase("some_database", []*tableInfo{
-					{
-						database:  "some_database",
-						schema:    "public",
-						tableName: "some_table",
+			tableRegistry: &TableRegistry{
+				tables: map[string]map[string]map[string]bool{
+					"some_database": {
+						"public": {
+							"some_table": true,
+						},
 					},
-				})
-				return tr
-			}(),
+				},
+			},
+		},
+		{
+			name: "select query with schema-qualified table",
+			eventStatementsRows: [][]driver.Value{{
+				"abc123",
+				"SELECT * FROM public.users WHERE id = $1",
+				"some_database",
+			}},
+			logsLabels: []model.LabelSet{
+				{"op": OP_QUERY_ASSOCIATION},
+				{"op": OP_QUERY_PARSED_TABLE_NAME},
+			},
+			logsLines: []string{
+				"level=\"info\" queryid=\"abc123\" querytext=\"SELECT * FROM public.users WHERE id = $1\" datname=\"some_database\" engine=\"postgres\"",
+				`level="info" queryid="abc123" datname="some_database" table="public.users" engine="postgres" validated="true"`,
+			},
+			tableRegistry: &TableRegistry{
+				tables: map[string]map[string]map[string]bool{
+					"some_database": {
+						"public": {
+							"users": true,
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "select query containing with",

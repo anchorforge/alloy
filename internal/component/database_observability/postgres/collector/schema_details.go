@@ -208,7 +208,7 @@ type foreignKey struct {
 
 type TableRegistry struct {
 	mu     sync.RWMutex
-	tables map[string]map[string]map[string]bool
+	tables map[string]map[string]map[string]bool // map[database]map[schema]map[table]bool
 }
 
 func NewTableRegistry() *TableRegistry {
@@ -243,6 +243,18 @@ func (tr *TableRegistry) IsValidTable(database, table string) bool {
 			if tables[table] {
 				return true
 			}
+		}
+	}
+	return false
+}
+
+func (tr *TableRegistry) IsValidTableInSchema(database, schema, table string) bool {
+	tr.mu.RLock()
+	defer tr.mu.RUnlock()
+
+	if schemas, ok := tr.tables[database]; ok {
+		if tables, ok := schemas[schema]; ok {
+			return tables[table]
 		}
 	}
 	return false
