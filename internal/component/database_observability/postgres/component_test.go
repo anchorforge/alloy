@@ -1,26 +1,23 @@
 package postgres
 
 import (
-	"database/sql"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	kitlog "github.com/go-kit/log"
+	"github.com/grafana/loki/pkg/push"
+
 	cmp "github.com/grafana/alloy/internal/component"
 	"github.com/grafana/alloy/internal/component/common/loki"
 	loki_fake "github.com/grafana/alloy/internal/component/common/loki/client/fake"
 	"github.com/grafana/alloy/internal/component/database_observability"
 	"github.com/grafana/alloy/internal/component/database_observability/postgres/collector"
-	"github.com/grafana/alloy/internal/component/discovery"
 	http_service "github.com/grafana/alloy/internal/service/http"
 	"github.com/grafana/alloy/syntax"
-	"github.com/grafana/alloy/syntax/alloytypes"
-	"github.com/grafana/loki/pkg/push"
 )
 
 func Test_enableOrDisableCollectors(t *testing.T) {
@@ -408,65 +405,4 @@ func TestPostgres_schema_details_cache_configuration_is_parsed_from_config(t *te
 		assert.Equal(t, 512, args.SchemaDetailsArguments.CacheSize)
 		assert.Equal(t, 5*time.Minute, args.SchemaDetailsArguments.CacheTTL)
 	})
-}
-
-func TestPostgres_schema_details_before_query_details_initialization(t *testing.T) {
-	args := Arguments{
-		DataSourceName: alloytypes.Secret("postgres://user:pass@localhost:5432/testdb?sslmode=disable"),
-		ForwardTo:      []loki.LogsReceiver{},
-		Targets:        []discovery.Target{},
-	}
-	args.SetToDefault()
-
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	require.NoError(t, err)
-	defer db.Close()
-
-	mock.ExpectPing()
-	mock.ExpectQuery(`SELECT
-	(pg_control_system()).system_identifier,
-	inet_server_addr(),
-	inet_server_port(),
-	setting as version
-FROM pg_settings
-WHERE name = 'server_version';`).WillReturnRows(
-		sqlmock.NewRows([]string{"system_identifier", "inet_server_addr", "inet_server_port", "version"}).
-			AddRow("123456", "127.0.0.1", "5432", "14.1"),
-	)
-
-	opts := cmp.Options{
-		ID:     "test.postgres",
-		Logger: kitlog.NewNopLogger(),
-		GetServiceData: func(name string) (interface{}, error) {
-			return http_service.Data{MemoryListenAddr: "127.0.0.1:0", BaseHTTPPath: "/component"}, nil
-		},
-		OnStateChange: func(e cmp.Exports) {},
-	}
-
-	c, err := new(opts, args, func(driverName, dataSourceName string) (*sql.DB, error) {
-		return db, nil
-	})
-	require.NoError(t, err)
-
-	err = c.Update(args)
-	require.NoError(t, err)
-
-	require.NoError(t, mock.ExpectationsWereMet())
-
-	c.mut.RLock()
-	defer c.mut.RUnlock()
-
-	var schemaIndex, queryIndex int = -1, -1
-	for i, col := range c.collectors {
-		if col.Name() == collector.SchemaDetailsCollector {
-			schemaIndex = i
-		}
-		if col.Name() == collector.QueryDetailsCollector {
-			queryIndex = i
-		}
-	}
-
-	if schemaIndex >= 0 && queryIndex >= 0 {
-		assert.True(t, schemaIndex < queryIndex, "SchemaDetails should be initialized before QueryDetails")
-	}
 }

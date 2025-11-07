@@ -448,34 +448,36 @@ func (c *Component) startCollectors(systemID string, engineVersion string) error
 	})
 	if err != nil {
 		logStartError(collector.ConnectionInfoName, "create", err)
+	} else {
+		if err := ciCollector.Start(context.Background()); err != nil {
+			logStartError(collector.ConnectionInfoName, "start", err)
+		}
+		c.collectors = append(c.collectors, ciCollector)
 	}
-	if err := ciCollector.Start(context.Background()); err != nil {
-		logStartError(collector.ConnectionInfoName, "start", err)
-	}
-
-	c.collectors = append(c.collectors, ciCollector)
 
 	if collectors[collector.ExplainPlanCollector] {
 		engineSemver, err := semver.ParseTolerant(engineVersion)
 		if err != nil {
 			logStartError(collector.ExplainPlanCollector, "parse version", err)
+		} else {
+			epCollector, err := collector.NewExplainPlan(collector.ExplainPlanArguments{
+				DB:             c.dbConnection,
+				DSN:            string(c.args.DataSourceName),
+				ScrapeInterval: c.args.ExplainPlanArguments.CollectInterval,
+				PerScrapeRatio: c.args.ExplainPlanArguments.PerCollectRatio,
+				Logger:         c.opts.Logger,
+				DBVersion:      engineSemver,
+				EntryHandler:   entryHandler,
+			})
+			if err != nil {
+				logStartError(collector.ExplainPlanCollector, "create", err)
+			} else {
+				if err := epCollector.Start(context.Background()); err != nil {
+					logStartError(collector.ExplainPlanCollector, "start", err)
+				}
+				c.collectors = append(c.collectors, epCollector)
+			}
 		}
-		epCollector, err := collector.NewExplainPlan(collector.ExplainPlanArguments{
-			DB:             c.dbConnection,
-			DSN:            string(c.args.DataSourceName),
-			ScrapeInterval: c.args.ExplainPlanArguments.CollectInterval,
-			PerScrapeRatio: c.args.ExplainPlanArguments.PerCollectRatio,
-			Logger:         c.opts.Logger,
-			DBVersion:      engineSemver,
-			EntryHandler:   entryHandler,
-		})
-		if err != nil {
-			logStartError(collector.ExplainPlanCollector, "create", err)
-		}
-		if err := epCollector.Start(context.Background()); err != nil {
-			logStartError(collector.ExplainPlanCollector, "start", err)
-		}
-		c.collectors = append(c.collectors, epCollector)
 	}
 
 	if len(startErrors) > 0 {

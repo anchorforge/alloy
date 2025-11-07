@@ -206,7 +206,7 @@ type foreignKey struct {
 	ReferencedColumnName string `json:"referenced_column_name"`
 }
 
-// TableRegistry is a source-of-truth table registry keeps track of databases, schemas, tables
+// TableRegistry is a source-of-truth cache that keeps track of databases, schemas, tables
 type TableRegistry struct {
 	mu     sync.RWMutex
 	tables map[string]map[string]map[string]bool // map[database]map[schema]map[table]bool
@@ -218,15 +218,15 @@ func NewTableRegistry() *TableRegistry {
 	}
 }
 
-func (tr *TableRegistry) SetTablesForDatabase(database string, tables []*tableInfo) {
+func (tr *TableRegistry) SetTablesForDatabase(database string, tablesInfo []*tableInfo) {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
 
 	delete(tr.tables, database)
 
-	if len(tables) > 0 {
+	if len(tablesInfo) > 0 {
 		tr.tables[database] = make(map[string]map[string]bool)
-		for _, table := range tables {
+		for _, table := range tablesInfo {
 			if tr.tables[database][table.schema] == nil {
 				tr.tables[database][table.schema] = make(map[string]bool)
 			}
@@ -248,7 +248,7 @@ func (tr *TableRegistry) IsValid(database, parsedTableName string) bool {
 	schemaName, tableName := parseSchemaQualifiedIfAny(parsedTableName)
 	switch schemaName {
 	case "": // parsedTableName isn't schema-qualified, e.g. SELECT * FROM table_name.
-		// can only be validated as "exists somewhere in the database", see limitation: https://github.com/grafana/grafana-dbo11y-app/issues/1838
+		// table name can only be validated as "exists somewhere in the database", see limitation: https://github.com/grafana/grafana-dbo11y-app/issues/1838
 		for _, tables := range schemas {
 			if tables[tableName] {
 				return true
