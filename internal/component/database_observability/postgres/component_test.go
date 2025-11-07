@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	kitlog "github.com/go-kit/log"
-
 	cmp "github.com/grafana/alloy/internal/component"
 	"github.com/grafana/alloy/internal/component/common/loki"
 	loki_fake "github.com/grafana/alloy/internal/component/common/loki/client/fake"
