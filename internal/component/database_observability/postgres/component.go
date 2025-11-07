@@ -382,7 +382,8 @@ func (c *Component) startCollectors(systemID string, engineVersion string) error
 		})
 		if err != nil {
 			logStartError(collector.SchemaDetailsCollector, "create", err)
-		} else {
+		}
+		if stCollector != nil {
 			tableRegistry = stCollector.GetTableRegistry()
 			if err := stCollector.Start(context.Background()); err != nil {
 				logStartError(collector.SchemaDetailsCollector, "start", err)
