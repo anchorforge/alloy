@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	kitlog "github.com/go-kit/log"
-	"github.com/grafana/loki/pkg/push"
 
 	cmp "github.com/grafana/alloy/internal/component"
 	"github.com/grafana/alloy/internal/component/common/loki"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/alloy/internal/component/database_observability/postgres/collector"
 	http_service "github.com/grafana/alloy/internal/service/http"
 	"github.com/grafana/alloy/syntax"
+	"github.com/grafana/loki/pkg/push"
 )
 
 func Test_enableOrDisableCollectors(t *testing.T) {
