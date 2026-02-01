@@ -477,6 +477,8 @@ service:
   clusterIP: ''
   # -- Value for internal traffic policy. 'Cluster' or 'Local'
   internalTrafficPolicy: Cluster
+  # -- Value for traffic distribution. 'PreferSameZone', 'PreferSameNode', or '' (empty for default behavior)
+  trafficDistribution: ''
   annotations: {}
     # cloud.google.com/load-balancer-type: Internal
 
